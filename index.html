@@ -1604,10 +1604,21 @@ body.page:not(.kb) #toast{bottom:calc(16px + var(--safe-b))}
   var TABS = { library: 'Library', lists: 'Favourite lists', fetch: 'Fetch', files: 'Import & export', connect: 'Connect', settings: 'Settings' };
   function args() { var o = {}; location.hash.slice(1).split('&').forEach(function (kv) { var p = kv.split('='); if (p[0]) o[p[0]] = decodeURIComponent(p[1] || ''); }); return o; }
   function go(h) { if (location.hash === h) route(); else location.hash = h; }
-  // Back only within the app's own screens: the entry before the first screen may be another page (in the
-  // simulator, the blank frame the app was written into), and going back there leaves a blank screen.
+  // The back arrow walks the app's own trail of screens and never the browser's history: inside another page
+  // (the simulator writes the app into a frame, which then shares the page's history and URL) a history step can
+  // leave the app altogether, to a blank frame or to the page itself. Going to the previous screen is a normal
+  // navigation instead, so it can only ever land on one of the app's screens.
+  var trail = [];
+  function remember() {
+    var h = location.hash;
+    if (!/^#(tab|patch|list)=/.test(h) || trail[trail.length - 1] === h) return;
+    trail.push(h);
+    if (trail.length > 50) trail.shift();
+  }
   function goBack(fallback) {
-    if (S.cameFrom && /#(tab|patch|list)=/.test(S.cameFrom)) history.back(); else go(fallback);
+    trail.pop();                                   // the screen we are on
+    var prev = trail.pop();                        // remember() puts it back when we arrive
+    go(prev && prev !== location.hash ? prev : fallback);
   }
   function route() {
     var a = args();
@@ -2601,7 +2612,8 @@ body.page:not(.kb) #toast{bottom:calc(16px + var(--safe-b))}
       var k = S.page && S.page.kind;
       goBack(k === 'list' ? '#tab=lists' : '#tab=' + (S.view || 'library'));
     };
-    window.addEventListener('hashchange', function (e) { S.cameFrom = e.oldURL; });
+    window.addEventListener('hashchange', remember);
+    remember();
     $('#kb').addEventListener('click', function (e) {
       var b = e.target.closest('[data-k]'); if (!b) return;
       var k = b.dataset.k;
