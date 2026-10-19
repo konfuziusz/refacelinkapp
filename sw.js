@@ -1,7 +1,7 @@
 // refacelink: offline service worker. The app is one self-contained index.html (JS, CSS, worklet and
 // WASM inlined), so caching it plus the manifest and icons is enough. Network first for the page so an
 // update shows up on the next start; cache first for everything else.
-var CACHE = 'refacelink-7572419a4f';
+var CACHE = 'refacelink-bb6429f8fa';
 var FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(FILES); }).then(function () { return self.skipWaiting(); }));

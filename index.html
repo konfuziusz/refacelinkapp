@@ -121,7 +121,9 @@ body.page #tabs,body.kb #tabs{display:none}
 .pr .nm{font-weight:650;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pr .mt{color:var(--mu);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 .pr .mt b{font-weight:600;color:var(--fg);opacity:.8}
-.pr .ib{width:42px;height:42px}
+.pr .ib{width:40px;height:40px}
+.pr .ib.send{color:var(--ac)}
+.pr .ib.sent{color:var(--ok, #46c878)}
 .pr .play{color:var(--ac)}
 .pr .play.on{background:var(--acs)}
 .pr .ck{width:26px;height:26px;border-radius:8px;border:2px solid var(--ln2);display:flex;align-items:center;justify-content:center;flex:none;color:var(--acf)}
@@ -1707,6 +1709,7 @@ body.page:not(.kb) #toast{bottom:calc(16px + var(--safe-b))}
     return '<li class="pr' + (S.sel[p.id] ? ' sel' : '') + '" data-id="' + p.id + '">' + (S.selecting ? '<span class="ck">' + ic('check') + '</span>' : '') +
       '<span class="badge m' + p.model + '">' + MN[p.model] + '</span><div class="tx"><div class="nm">' + esc(p.name) + '</div><div class="mt">' + meta + '</div></div>' +
       (S.selecting ? '' : '<button class="ib play' + (playing ? ' on' : '') + '" data-act="prel" aria-label="Prelisten">' + ic(playing ? 'stop' : 'play', 'f') + '</button>' +
+      '<button class="ib send" data-act="qsend" aria-label="Send to reface">' + ic('send') + '</button>' +
       '<button class="ib' + (p.fav ? ' on' : '') + '" data-act="fav" aria-label="Favourite">' + ic('star', p.fav ? 'f' : '') + '</button>') + '</li>';
   }
 
@@ -2636,6 +2639,15 @@ body.page:not(.kb) #toast{bottom:calc(16px + var(--safe-b))}
       if (S.selecting) { S.sel[p.id] = !S.sel[p.id]; li.classList.toggle('sel', !!S.sel[p.id]); updateSelbar(); return; }
       if (act === 'fav') { toggleFav(p); updateLibrary(); return; }
       if (act === 'prel') { prelisten(p, a); return; }
+      // quick send from the list: the same as the patch page's Send (checks, model warning, STORE hint)
+      if (act === 'qsend') {
+        sendPatch(p).then(function (ok) {
+          if (!ok) return;
+          a.classList.add('sent'); a.innerHTML = ic('check');
+          setTimeout(function () { a.classList.remove('sent'); a.innerHTML = ic('send'); }, 1200);
+        });
+        return;
+      }
       if (!act) { go('#patch=' + p.id); return; }
     }
     if (li && S.page && S.page.kind === 'list') {
